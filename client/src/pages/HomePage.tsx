@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import CrownHolder from '@/components/CrownHolder';
 import StealCrownButton from '@/components/StealCrownButton';
 import CooldownTimer from '@/components/CooldownTimer';
@@ -9,7 +10,7 @@ import WorldIDButton from '@/components/WorldIDButton';
 import GameStats from '@/components/GameStats';
 import TokenEarningRate from '@/components/TokenEarningRate';
 import CrownIcon from '@/components/CrownIcon';
-import { Info, AlertTriangle } from 'lucide-react';
+import { Info, AlertTriangle, Trophy, Users, HelpCircle } from 'lucide-react';
 import { playSwipeSound, playSuccessSound } from '@/utils/sounds';
 
 // TODO: remove mock data when implementing real backend
@@ -28,6 +29,15 @@ const mockStats = {
   longestReign: '4h 23m',
   totalTokensEarned: 156432
 };
+
+const mockLeaderboard = [
+  { rank: 1, name: 'Alex Champion', totalCrownTime: '12h 34m', tokensEarned: 45123, isVerified: true },
+  { rank: 2, name: 'Sarah Ruler', totalCrownTime: '10h 15m', tokensEarned: 37895, isVerified: true },
+  { rank: 3, name: 'Mike King', totalCrownTime: '8h 42m', tokensEarned: 31256, isVerified: true },
+  { rank: 4, name: 'Lisa Crown', totalCrownTime: '7h 28m', tokensEarned: 26847, isVerified: true },
+  { rank: 5, name: 'Tom Royal', totalCrownTime: '6h 53m', tokensEarned: 24691, isVerified: true },
+  { rank: 6, name: 'You', totalCrownTime: '2h 17m', tokensEarned: 8234, isVerified: true }
+];
 
 // Game configuration - sustainable token earning
 const DAILY_TOKEN_POOL = 50000; // 50k SAM tokens per day (sustainable)
@@ -106,59 +116,201 @@ export default function HomePage() {
 
       {/* Current Crown Holder */}
       <CrownHolder holder={currentHolder} isCurrentUser={userHasCrown} />
-      
-      {/* Token Earning Rate */}
-      {isVerified && (
-        <TokenEarningRate 
-          dailyPool={DAILY_TOKEN_POOL} 
-          isHolding={userHasCrown}
-        />
-      )}
 
-      {/* Game Actions */}
-      {isVerified && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CrownIcon size="sm" />
-              Game Actions
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {isOnCooldown && cooldownEnd && (
-              <CooldownTimer 
-                endTime={cooldownEnd} 
-                onComplete={handleCooldownComplete}
-              />
-            )}
-            
-            <div className="flex flex-col gap-3">
-              <StealCrownButton 
-                onSteal={handleStealCrown}
-                isOnCooldown={isOnCooldown}
-                disabled={userHasCrown}
-              />
-              
-              {userHasCrown && (
-                <Badge variant="secondary" className="bg-gaming-success text-gaming-success-foreground self-center">
-                  You hold the crown! Keep earning tokens.
-                </Badge>
-              )}
-            </div>
-            
-            <Alert>
-              <Info className="h-4 w-4" />
-              <AlertDescription>
-                <strong>How it works:</strong> Steal the crown to start earning SAM tokens. 
-                Each second you hold the crown earns you tokens. After stealing, you have a 1-hour cooldown.
-              </AlertDescription>
-            </Alert>
-          </CardContent>
-        </Card>
-      )}
+      {/* Main Content Tabs */}
+      <Tabs defaultValue="game" className="w-full">
+        <TabsList className="grid w-full grid-cols-3" data-testid="main-tabs">
+          <TabsTrigger value="game" className="flex items-center gap-2" data-testid="tab-game">
+            <CrownIcon size="sm" />
+            Play
+          </TabsTrigger>
+          <TabsTrigger value="leaderboard" className="flex items-center gap-2" data-testid="tab-leaderboard">
+            <Trophy className="w-4 h-4" />
+            Leaderboard
+          </TabsTrigger>
+          <TabsTrigger value="info" className="flex items-center gap-2" data-testid="tab-info">
+            <HelpCircle className="w-4 h-4" />
+            How to Play
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Game Statistics */}
-      <GameStats stats={mockStats} />
+        {/* Game Tab */}
+        <TabsContent value="game" className="space-y-6">
+          {/* Token Earning Rate */}
+          {isVerified && (
+            <TokenEarningRate 
+              dailyPool={DAILY_TOKEN_POOL} 
+              isHolding={userHasCrown}
+            />
+          )}
+
+          {/* Game Actions */}
+          {isVerified && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <CrownIcon size="sm" />
+                  Game Actions
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {isOnCooldown && cooldownEnd && (
+                  <CooldownTimer 
+                    endTime={cooldownEnd} 
+                    onComplete={handleCooldownComplete}
+                  />
+                )}
+                
+                <div className="flex flex-col gap-3">
+                  <StealCrownButton 
+                    onSteal={handleStealCrown}
+                    isOnCooldown={isOnCooldown}
+                    disabled={userHasCrown}
+                  />
+                  
+                  {userHasCrown && (
+                    <Badge variant="secondary" className="bg-gaming-success text-gaming-success-foreground self-center">
+                      You hold the crown! Keep earning tokens.
+                    </Badge>
+                  )}
+                </div>
+                
+                <Alert>
+                  <Info className="h-4 w-4" />
+                  <AlertDescription>
+                    <strong>How it works:</strong> Steal the crown to start earning SAM tokens. 
+                    Each second you hold the crown earns you tokens. After stealing, you have a 1-hour cooldown.
+                  </AlertDescription>
+                </Alert>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Game Statistics */}
+          <GameStats stats={mockStats} />
+        </TabsContent>
+
+        {/* Leaderboard Tab */}
+        <TabsContent value="leaderboard" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Trophy className="w-5 h-5 text-yellow-500" />
+                Crown Champions
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">Top players ranked by total crown time</p>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {mockLeaderboard.map((player) => (
+                  <div key={player.rank} className="flex items-center justify-between p-3 rounded-lg border hover-elevate" data-testid={`leaderboard-player-${player.rank}`}>
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-bold">
+                        #{player.rank}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium" data-testid={`player-name-${player.rank}`}>{player.name}</span>
+                          {player.isVerified && (
+                            <Badge variant="outline" className="text-xs bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800">
+                              <Users className="w-3 h-3 mr-1" />
+                              Verified
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          <span data-testid={`crown-time-${player.rank}`}>{player.totalCrownTime}</span> crown time
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-medium text-primary" data-testid={`tokens-earned-${player.rank}`}>
+                        {player.tokensEarned.toLocaleString()} SAM
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        tokens earned
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Info Tab */}
+        <TabsContent value="info" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <HelpCircle className="w-5 h-5 text-blue-500" />
+                How to Play SAM Crown
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">Master the crown game in three simple steps</p>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Step 1 */}
+              <div className="flex gap-4">
+                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 font-bold flex items-center justify-center">
+                  1
+                </div>
+                <div>
+                  <h3 className="font-semibold mb-2">Verify with World ID</h3>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Prove you're human using World ID verification. This ensures fair play and prevents bots from dominating the game.
+                  </p>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Users className="w-4 h-4" />
+                    <span>Human verification required • One account per person</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Step 2 */}
+              <div className="flex gap-4">
+                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-400 font-bold flex items-center justify-center">
+                  2
+                </div>
+                <div>
+                  <h3 className="font-semibold mb-2">Steal the Crown</h3>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Click "Steal Crown" to take it from the current holder. You'll immediately start earning SAM tokens every second you hold it.
+                  </p>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <CrownIcon size="sm" />
+                    <span>Instant token earning • 1-hour cooldown after stealing</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Step 3 */}
+              <div className="flex gap-4">
+                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-yellow-100 dark:bg-yellow-900 text-yellow-600 dark:text-yellow-400 font-bold flex items-center justify-center">
+                  3
+                </div>
+                <div>
+                  <h3 className="font-semibold mb-2">Hold & Earn</h3>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Keep the crown as long as possible to maximize your token earnings. Defend against other players trying to steal it!
+                  </p>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Trophy className="w-4 h-4" />
+                    <span>50k SAM tokens distributed daily • Compete for the leaderboard</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Pro Tips */}
+              <Alert>
+                <Info className="h-4 w-4" />
+                <AlertDescription>
+                  <strong>Pro Tips:</strong> Check the leaderboard to see top players. The more time you hold the crown, the higher you climb in rankings. Stay active to defend your crown!
+                </AlertDescription>
+              </Alert>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

@@ -18,9 +18,6 @@ export default function Header() {
         </div>
         
         <div className="flex items-center gap-2">
-          <Badge variant="outline" className="text-xs font-gaming">
-            World ID Verified
-          </Badge>
           <ThemeToggle />
         </div>
       </div>
