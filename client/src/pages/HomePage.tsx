@@ -31,12 +31,12 @@ const mockStats = {
 };
 
 const mockLeaderboard = [
-  { rank: 1, name: 'Alex Champion', totalCrownTime: '12h 34m', tokensEarned: 45123, isVerified: true },
-  { rank: 2, name: 'Sarah Ruler', totalCrownTime: '10h 15m', tokensEarned: 37895, isVerified: true },
-  { rank: 3, name: 'Mike King', totalCrownTime: '8h 42m', tokensEarned: 31256, isVerified: true },
-  { rank: 4, name: 'Lisa Crown', totalCrownTime: '7h 28m', tokensEarned: 26847, isVerified: true },
-  { rank: 5, name: 'Tom Royal', totalCrownTime: '6h 53m', tokensEarned: 24691, isVerified: true },
-  { rank: 6, name: 'You', totalCrownTime: '2h 17m', tokensEarned: 8234, isVerified: true }
+  { rank: 1, name: 'Alex Champion', totalCrownTime: '12h 34m', isVerified: true },
+  { rank: 2, name: 'Sarah Ruler', totalCrownTime: '10h 15m', isVerified: true },
+  { rank: 3, name: 'Mike King', totalCrownTime: '8h 42m', isVerified: true },
+  { rank: 4, name: 'Lisa Crown', totalCrownTime: '7h 28m', isVerified: true },
+  { rank: 5, name: 'Tom Royal', totalCrownTime: '6h 53m', isVerified: true },
+  { rank: 6, name: 'You', totalCrownTime: '2h 17m', isVerified: true }
 ];
 
 // Game configuration - sustainable token earning
@@ -198,7 +198,7 @@ export default function HomePage() {
                 <Trophy className="w-5 h-5 text-yellow-500" />
                 Crown Champions
               </CardTitle>
-              <p className="text-sm text-muted-foreground">Top players ranked by total crown time</p>
+              <p className="text-sm text-muted-foreground">Players ranked by total crown time</p>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
@@ -219,16 +219,16 @@ export default function HomePage() {
                           )}
                         </div>
                         <div className="text-sm text-muted-foreground">
-                          <span data-testid={`crown-time-${player.rank}`}>{player.totalCrownTime}</span> crown time
+                          Rank #{player.rank} player
                         </div>
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="font-medium text-primary" data-testid={`tokens-earned-${player.rank}`}>
-                        {player.tokensEarned.toLocaleString()} SAM
+                      <div className="font-medium text-primary" data-testid={`crown-time-display-${player.rank}`}>
+                        {player.totalCrownTime}
                       </div>
                       <div className="text-xs text-muted-foreground">
-                        tokens earned
+                        total time
                       </div>
                     </div>
                   </div>
@@ -274,11 +274,11 @@ export default function HomePage() {
                 <div>
                   <h3 className="font-semibold mb-2">Steal the Crown</h3>
                   <p className="text-sm text-muted-foreground mb-3">
-                    Click "Steal Crown" to take it from the current holder. You'll immediately start earning SAM tokens every second you hold it.
+                    When someone else has the crown, you'll see "User has the crown, steal it!" Click to automatically take it and start earning SAM tokens.
                   </p>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <CrownIcon size="sm" />
-                    <span>Instant token earning • 1-hour cooldown after stealing</span>
+                    <span>Automatic stealing • 1-hour cooldown after taking crown</span>
                   </div>
                 </div>
               </div>
@@ -291,11 +291,11 @@ export default function HomePage() {
                 <div>
                   <h3 className="font-semibold mb-2">Hold & Earn</h3>
                   <p className="text-sm text-muted-foreground mb-3">
-                    Keep the crown as long as possible to maximize your token earnings. Defend against other players trying to steal it!
+                    When you have the crown, you'll see "You have the crown" with a timer showing how long you've held it. Other players can steal it automatically.
                   </p>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <Trophy className="w-4 h-4" />
-                    <span>50k SAM tokens distributed daily • Compete for the leaderboard</span>
+                    <span>50k SAM tokens distributed daily • Compete for longest crown time</span>
                   </div>
                 </div>
               </div>
@@ -304,7 +304,7 @@ export default function HomePage() {
               <Alert>
                 <Info className="h-4 w-4" />
                 <AlertDescription>
-                  <strong>Pro Tips:</strong> Check the leaderboard to see top players. The more time you hold the crown, the higher you climb in rankings. Stay active to defend your crown!
+                  <strong>Pro Tips:</strong> Check the leaderboard to see top players by crown time. The longer you hold the crown, the higher you climb in rankings. Crown ownership changes automatically when others steal it!
                 </AlertDescription>
               </Alert>
             </CardContent>
