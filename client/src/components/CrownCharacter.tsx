@@ -1,4 +1,4 @@
-import samWithCrown from '@assets/generated_images/Sam_character_wearing_crown_ffdf863c.png';
+import samWithCrown from '@assets/Sam wearing a crown_1757776750714.png';
 
 interface CrownCharacterProps {
   size?: 'sm' | 'md' | 'lg' | 'xl';

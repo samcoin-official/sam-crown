@@ -10,6 +10,7 @@ import GameStats from '@/components/GameStats';
 import TokenEarningRate from '@/components/TokenEarningRate';
 import CrownIcon from '@/components/CrownIcon';
 import { Info, AlertTriangle } from 'lucide-react';
+import { playSwipeSound, playSuccessSound } from '@/utils/sounds';
 
 // TODO: remove mock data when implementing real backend
 const mockCurrentHolder = {
@@ -38,25 +39,39 @@ export default function HomePage() {
   const [currentHolder, setCurrentHolder] = useState(mockCurrentHolder);
   const [userHasCrown, setUserHasCrown] = useState(false);
 
-  const handleStealCrown = () => {
+  const handleStealCrown = async () => {
     console.log('Crown stolen successfully!');
-    // TODO: implement real crown stealing logic
     
-    // Mock: Update current holder to the user
-    setCurrentHolder({
-      id: '2',
-      name: 'You',
-      avatar: undefined,
-      crownedAt: new Date(),
-      tokensEarned: 0,
-      isVerified: true
-    });
-    setUserHasCrown(true);
-    
-    // Set cooldown for 1 hour
-    const cooldownEndTime = new Date(Date.now() + 60 * 60 * 1000);
-    setCooldownEnd(cooldownEndTime);
-    setIsOnCooldown(true);
+    try {
+      // Play satisfying swipe sound first
+      playSwipeSound();
+      
+      // TODO: implement real crown stealing logic
+      
+      // Mock: Update current holder to the user
+      setCurrentHolder({
+        id: '2',
+        name: 'You',
+        avatar: undefined,
+        crownedAt: new Date(),
+        tokensEarned: 0,
+        isVerified: true
+      });
+      setUserHasCrown(true);
+      
+      // Set cooldown for 1 hour
+      const cooldownEndTime = new Date(Date.now() + 60 * 60 * 1000);
+      setCooldownEnd(cooldownEndTime);
+      setIsOnCooldown(true);
+      
+      // Play success sound after a short delay
+      setTimeout(() => {
+        playSuccessSound();
+      }, 300);
+      
+    } catch (error) {
+      console.error('Crown steal failed:', error);
+    }
   };
 
   const handleCooldownComplete = () => {

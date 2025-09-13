@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Shield, Check } from 'lucide-react';
+import { MiniKit, VerifyCommandInput, VerificationLevel, ISuccessResult } from '@worldcoin/minikit-js';
 
 interface WorldIDButtonProps {
   onVerify?: (verified: boolean) => void;
@@ -11,16 +12,68 @@ interface WorldIDButtonProps {
 
 export default function WorldIDButton({ onVerify, isVerified = false, className = '' }: WorldIDButtonProps) {
   const [isVerifying, setIsVerifying] = useState(false);
+  const [isMiniKitInstalled, setIsMiniKitInstalled] = useState(false);
+
+  useEffect(() => {
+    setIsMiniKitInstalled(MiniKit.isInstalled());
+  }, []);
 
   const handleVerify = async () => {
     console.log('World ID verification triggered');
     setIsVerifying(true);
     
-    // TODO: Implement actual World ID verification
-    setTimeout(() => {
+    if (!isMiniKitInstalled) {
+      console.log('MiniKit not installed, using fallback verification');
+      // Fallback for development/testing
+      setTimeout(() => {
+        setIsVerifying(false);
+        onVerify?.(true);
+      }, 2000);
+      return;
+    }
+
+    try {
+      const verifyPayload: VerifyCommandInput = {
+        action: 'play-and-earn', // Your action ID from Developer Portal
+        signal: undefined, // Optional additional data
+        verification_level: VerificationLevel.Orb, // Orb verification for humans
+      };
+
+      // World App will open verification drawer
+      const { finalPayload } = await MiniKit.commandsAsync.verify(verifyPayload);
+      
+      if (finalPayload.status === 'error') {
+        console.log('Verification error:', finalPayload);
+        setIsVerifying(false);
+        return;
+      }
+
+      // Send proof to backend for verification
+      const verifyResponse = await fetch('/api/verify', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          payload: finalPayload as ISuccessResult,
+          action: 'play-and-earn',
+          signal: undefined,
+        }),
+      });
+
+      const verifyResponseJson = await verifyResponse.json();
+      
+      if (verifyResponseJson.status === 200) {
+        console.log('Verification success!');
+        onVerify?.(true);
+      } else {
+        console.log('Backend verification failed');
+      }
+    } catch (error) {
+      console.error('World ID verification error:', error);
+    } finally {
       setIsVerifying(false);
-      onVerify?.(true);
-    }, 2000);
+    }
   };
 
   if (isVerified) {
