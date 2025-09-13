@@ -1,15 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+interface VerifyPayload {
+  nullifier_hash: string;
+  merkle_root: string;
+  proof: string;
+  verification_level: string;
+}
+
 interface IRequestPayload {
-  payload: any
-  action: string
-  signal: string | undefined
+  payload: VerifyPayload;
+  action: string;
+  signal: string | undefined;
 }
 
 export async function POST(req: NextRequest) {
   const { payload, action, signal } = (await req.json()) as IRequestPayload
   
-  // Use direct API call instead of wrapper function
   const verifyResponse = await fetch('https://developer.worldcoin.org/api/v1/verify', {
     method: 'POST',
     headers: {
