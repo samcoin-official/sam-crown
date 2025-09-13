@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { tokenConfigSchema, type TokenConfig, type TokenConfigResponse } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // World ID verification endpoint
@@ -40,9 +41,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Token distribution configuration endpoint
+  app.get('/api/config/tokens', async (req, res) => {
+    try {
+      // Parse environment variables with fallbacks
+      const dailyTokenPool = parseInt(process.env.DAILY_TOKEN_POOL || '5555');
+      const totalSupply = parseInt(process.env.TOTAL_TOKEN_SUPPLY || '1000000');
+      const campaignDays = parseInt(process.env.CAMPAIGN_DURATION_DAYS || '180');
+      const distributionWallet = process.env.DISTRIBUTION_WALLET || 'not-configured';
+      
+      // Calculate tokens per second from daily pool
+      const tokensPerSecond = dailyTokenPool / 86400;
+      
+      const configData: TokenConfig = {
+        dailyTokenPool,
+        totalSupply,
+        campaignDays,
+        distributionWallet,
+        tokensPerSecond
+      };
+      
+      // Validate configuration using schema
+      const validatedConfig = tokenConfigSchema.parse(configData);
+      
+      const response: TokenConfigResponse = {
+        success: true,
+        config: validatedConfig
+      };
+      
+      res.json(response);
+    } catch (error) {
+      console.error('Token config error:', error);
+      
+      const errorResponse: TokenConfigResponse = {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to get token configuration'
+      };
+      
+      res.status(500).json(errorResponse);
+    }
+  });
+
   // Crown game API endpoints can be added here
   // app.get('/api/crown/current', ...);
   // app.post('/api/crown/steal', ...);
+  // app.post('/api/tokens/transfer', ...); // For World App wallet transfers
 
   const httpServer = createServer(app);
 

@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Skeleton } from '@/components/ui/skeleton';
 import CrownHolder from '@/components/CrownHolder';
 import StealCrownButton from '@/components/StealCrownButton';
 import CooldownTimer from '@/components/CooldownTimer';
@@ -10,8 +11,10 @@ import WorldIDButton from '@/components/WorldIDButton';
 import GameStats from '@/components/GameStats';
 import TokenEarningRate from '@/components/TokenEarningRate';
 import CrownIcon from '@/components/CrownIcon';
-import { Info, AlertTriangle, Trophy, Users, HelpCircle } from 'lucide-react';
+import { Info, AlertTriangle, Trophy, Users, HelpCircle, Loader2 } from 'lucide-react';
 import { playSwipeSound, playSuccessSound } from '@/utils/sounds';
+import { useQuery } from '@tanstack/react-query';
+import type { TokenConfigResponse } from '@shared/schema';
 
 // TODO: remove mock data when implementing real backend
 const mockCurrentHolder = {
@@ -39,10 +42,17 @@ const mockLeaderboard = [
   { rank: 6, name: 'You', totalCrownTime: '2h 17m', isVerified: true }
 ];
 
-// Game configuration - sustainable token earning
-const DAILY_TOKEN_POOL = 50000; // 50k SAM tokens per day (sustainable)
-
 export default function HomePage() {
+  // Fetch token configuration from API
+  const { 
+    data: tokenConfigResponse, 
+    isLoading: tokenConfigLoading, 
+    error: tokenConfigError 
+  } = useQuery<TokenConfigResponse>({
+    queryKey: ['/api/config/tokens'],
+    staleTime: 5 * 60 * 1000, // 5 minutes cache
+    gcTime: 10 * 60 * 1000, // 10 minutes garbage collection
+  });
   const [isVerified, setIsVerified] = useState(false);
   const [isOnCooldown, setIsOnCooldown] = useState(false);
   const [cooldownEnd, setCooldownEnd] = useState<Date | null>(null);
@@ -136,12 +146,45 @@ export default function HomePage() {
 
         {/* Game Tab */}
         <TabsContent value="game" className="space-y-6">
+          {/* Token Configuration Loading/Error States */}
+          {tokenConfigError && (
+            <Alert className="border-destructive/50 bg-destructive/5">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>
+                Failed to load token configuration. Please refresh the page to try again.
+              </AlertDescription>
+            </Alert>
+          )}
+
           {/* Token Earning Rate */}
           {isVerified && (
-            <TokenEarningRate 
-              dailyPool={DAILY_TOKEN_POOL} 
-              isHolding={userHasCrown}
-            />
+            <>
+              {tokenConfigLoading ? (
+                <Card>
+                  <CardContent className="p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Skeleton className="w-5 h-5 rounded" />
+                        <Skeleton className="w-24 h-4" />
+                      </div>
+                      <Skeleton className="w-16 h-4" />
+                    </div>
+                    <div className="space-y-2">
+                      <Skeleton className="w-full h-4" />
+                      <Skeleton className="w-full h-4" />
+                      <Skeleton className="w-full h-4" />
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : (
+                tokenConfigResponse?.success && tokenConfigResponse.config && (
+                  <TokenEarningRate 
+                    dailyPool={tokenConfigResponse.config.dailyTokenPool} 
+                    isHolding={userHasCrown}
+                  />
+                )
+              )}
+            </>
           )}
 
           {/* Game Actions */}
@@ -295,7 +338,7 @@ export default function HomePage() {
                   </p>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <Trophy className="w-4 h-4" />
-                    <span>50k SAM tokens distributed daily • Compete for longest crown time</span>
+                    <span>Daily token distribution • Compete for longest crown time</span>
                   </div>
                 </div>
               </div>
