@@ -1,6 +1,6 @@
 import { Badge } from '@/components/ui/badge';
 import ThemeToggle from './ThemeToggle';
-import samLogo from '@assets/Sam drip logo _1757776270977.jpeg';
+import samLogo from '@assets/SAM Crown Logo_1757778804301.png';
 
 export default function Header() {
   return (
@@ -9,7 +9,7 @@ export default function Header() {
         <div className="flex items-center gap-2">
           <img 
             src={samLogo} 
-            alt="SAM Drip Logo" 
+            alt="SAM Crown Logo" 
             className="w-8 h-8 object-contain"
             draggable={false}
           />
