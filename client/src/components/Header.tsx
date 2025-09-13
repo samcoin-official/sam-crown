@@ -1,13 +1,18 @@
 import { Badge } from '@/components/ui/badge';
-import CrownIcon from './CrownIcon';
 import ThemeToggle from './ThemeToggle';
+import samLogo from '@assets/Sam drip logo _1757776270977.jpeg';
 
 export default function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 items-center justify-between px-4">
         <div className="flex items-center gap-2">
-          <CrownIcon size="sm" withGlow />
+          <img 
+            src={samLogo} 
+            alt="SAM Drip Logo" 
+            className="w-8 h-8 object-contain"
+            draggable={false}
+          />
           <span className="font-gaming font-bold text-lg crown-text-gradient">SAM Crown</span>
           <Badge variant="secondary" className="text-xs">Mini App</Badge>
         </div>

@@ -2,6 +2,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import CrownIcon from './CrownIcon';
+import CrownCharacter from './CrownCharacter';
 import CrownTimer from './CrownTimer';
 import { Crown, Zap } from 'lucide-react';
 
@@ -14,10 +15,11 @@ interface CrownHolderProps {
     tokensEarned: number;
     isVerified: boolean;
   };
+  isCurrentUser?: boolean;
   className?: string;
 }
 
-export default function CrownHolder({ holder, className = '' }: CrownHolderProps) {
+export default function CrownHolder({ holder, isCurrentUser = false, className = '' }: CrownHolderProps) {
   return (
     <Card className={`border-crown-gold-border bg-gradient-to-br from-crown-gold/5 to-crown-gold/10 ${className}`}>
       <CardContent className="p-6">
@@ -44,7 +46,11 @@ export default function CrownHolder({ holder, className = '' }: CrownHolderProps
               </div>
             </div>
           </div>
-          <CrownIcon size="lg" withGlow />
+          {isCurrentUser ? (
+            <CrownCharacter size="lg" />
+          ) : (
+            <CrownIcon size="lg" withGlow />
+          )}
         </div>
         
         <div className="space-y-3">

@@ -7,6 +7,7 @@ import StealCrownButton from '@/components/StealCrownButton';
 import CooldownTimer from '@/components/CooldownTimer';
 import WorldIDButton from '@/components/WorldIDButton';
 import GameStats from '@/components/GameStats';
+import TokenEarningRate from '@/components/TokenEarningRate';
 import CrownIcon from '@/components/CrownIcon';
 import { Info, AlertTriangle } from 'lucide-react';
 
@@ -27,11 +28,15 @@ const mockStats = {
   totalTokensEarned: 156432
 };
 
+// Game configuration - sustainable token earning
+const DAILY_TOKEN_POOL = 50000; // 50k SAM tokens per day (sustainable)
+
 export default function HomePage() {
   const [isVerified, setIsVerified] = useState(false);
   const [isOnCooldown, setIsOnCooldown] = useState(false);
   const [cooldownEnd, setCooldownEnd] = useState<Date | null>(null);
   const [currentHolder, setCurrentHolder] = useState(mockCurrentHolder);
+  const [userHasCrown, setUserHasCrown] = useState(false);
 
   const handleStealCrown = () => {
     console.log('Crown stolen successfully!');
@@ -46,6 +51,7 @@ export default function HomePage() {
       tokensEarned: 0,
       isVerified: true
     });
+    setUserHasCrown(true);
     
     // Set cooldown for 1 hour
     const cooldownEndTime = new Date(Date.now() + 60 * 60 * 1000);
@@ -84,7 +90,15 @@ export default function HomePage() {
       )}
 
       {/* Current Crown Holder */}
-      <CrownHolder holder={currentHolder} />
+      <CrownHolder holder={currentHolder} isCurrentUser={userHasCrown} />
+      
+      {/* Token Earning Rate */}
+      {isVerified && (
+        <TokenEarningRate 
+          dailyPool={DAILY_TOKEN_POOL} 
+          isHolding={userHasCrown}
+        />
+      )}
 
       {/* Game Actions */}
       {isVerified && (
@@ -107,10 +121,10 @@ export default function HomePage() {
               <StealCrownButton 
                 onSteal={handleStealCrown}
                 isOnCooldown={isOnCooldown}
-                disabled={currentHolder.name === 'You'}
+                disabled={userHasCrown}
               />
               
-              {currentHolder.name === 'You' && (
+              {userHasCrown && (
                 <Badge variant="secondary" className="bg-gaming-success text-gaming-success-foreground self-center">
                   You hold the crown! Keep earning tokens.
                 </Badge>
