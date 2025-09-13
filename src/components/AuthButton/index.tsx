@@ -1,67 +1,86 @@
 'use client';
-import { walletAuth } from '@/auth/wallet';
+import { MiniKit, VerifyCommandInput, VerificationLevel, ISuccessResult } from '@worldcoin/minikit-js'
 import { Button, LiveFeedback } from '@worldcoin/mini-apps-ui-kit-react';
 import { useMiniKit } from '@worldcoin/minikit-js/minikit-provider';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 
-/**
- * This component is an example of how to authenticate a user
- * We will use Next Auth for this example, but you can use any auth provider
- * Read More: https://docs.world.org/mini-apps/commands/wallet-auth
- */
 export const AuthButton = () => {
   const [isPending, setIsPending] = useState(false);
+  const [isVerified, setIsVerified] = useState(false);
   const { isInstalled } = useMiniKit();
 
-  const onClick = useCallback(async () => {
+  const verifyPayload: VerifyCommandInput = {
+    action: 'play-and-earn', // Your action ID from Developer Portal
+    signal: '', // Optional
+    verification_level: VerificationLevel.Orb,
+  }
+
+  const handleVerify = useCallback(async () => {
     if (!isInstalled || isPending) {
       return;
     }
+
     setIsPending(true);
+    
     try {
-      await walletAuth();
-    } catch (error) {
-      console.error('Wallet authentication button error', error);
-      setIsPending(false);
-      return;
-    }
-
-    setIsPending(false);
-  }, [isInstalled, isPending]);
-
-  useEffect(() => {
-    const authenticate = async () => {
-      if (isInstalled && !isPending) {
-        setIsPending(true);
-        try {
-          await walletAuth();
-        } catch (error) {
-          console.error('Auto wallet authentication error', error);
-        } finally {
-          setIsPending(false);
-        }
+      const { finalPayload } = await MiniKit.commandsAsync.verify(verifyPayload)
+      
+      if (finalPayload.status === 'error') {
+        console.log('Error payload', finalPayload)
+        setIsPending(false);
+        return;
       }
-    };
 
-    authenticate();
+      // Verify the proof in the backend
+      const verifyResponse = await fetch('/api/verify', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          payload: finalPayload as ISuccessResult,
+          action: 'play-and-earn',
+          signal: '',
+        }),
+      })
+
+      const verifyResponseJson = await verifyResponse.json()
+      if (verifyResponseJson.status === 200) {
+        setIsVerified(true);
+        console.log('Verification success!')
+      }
+    } catch (error) {
+      console.error('World ID verification error', error);
+    } finally {
+      setIsPending(false);
+    }
   }, [isInstalled, isPending]);
+
+  if (isVerified) {
+    return (
+      <div className="text-center">
+        <p className="text-green-600 font-semibold mb-4">✅ Verified Human</p>
+        <p className="text-gray-600">Welcome to SAM Crown!</p>
+      </div>
+    );
+  }
 
   return (
     <LiveFeedback
       label={{
-        failed: 'Failed to login',
-        pending: 'Logging in',
-        success: 'Logged in',
+        failed: 'Verification failed',
+        pending: 'Verifying with World ID',
+        success: 'Verified',
       }}
       state={isPending ? 'pending' : undefined}
     >
       <Button
-        onClick={onClick}
-        disabled={isPending}
+        onClick={handleVerify}
+        disabled={isPending || !isInstalled}
         size="lg"
         variant="primary"
       >
-        Login with Wallet
+        Verify with World ID
       </Button>
     </LiveFeedback>
   );
