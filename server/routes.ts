@@ -4,6 +4,17 @@ import { storage } from "./storage";
 import { tokenConfigSchema, type TokenConfig, type TokenConfigResponse } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Debug middleware to log all API requests
+  app.use('/api', (req, res, next) => {
+    console.log(`[API DEBUG] ${req.method} ${req.path} - Body:`, req.body);
+    res.setHeader('Content-Type', 'application/json');
+    next();
+  });
+  // Health check endpoint
+  app.get('/api/health', (req, res) => {
+    res.json({ success: true, message: 'API is running', timestamp: new Date().toISOString() });
+  });
+  
   // World ID verification endpoint
   app.post('/api/verify', async (req, res) => {
     try {
@@ -98,7 +109,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Calculate current session duration and tokens earned
-      const sessionDuration = Math.floor((Date.now() - new Date(currentHolder.startedAt).getTime()) / 1000);
+      const sessionDuration = Math.floor((Date.now() - new Date(currentHolder.startedAt!).getTime()) / 1000);
       const tokensPerSecond = parseInt(process.env.DAILY_TOKEN_POOL || '5555') / 86400;
       const currentTokens = Math.floor(sessionDuration * tokensPerSecond * 100) / 100;
       
@@ -106,14 +117,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         success: true,
         crownHolder: {
           user: {
-            id: currentHolder.id,
-            username: currentHolder.username,
-            isVerified: currentHolder.isVerified,
-            totalCrownTime: parseInt(currentHolder.totalCrownTime),
-            totalTokensEarned: parseFloat(currentHolder.totalTokensEarned)
+            id: currentHolder.user.id,
+            username: currentHolder.user.username || 'Unknown',
+            isVerified: currentHolder.user.isVerified,
+            totalCrownTime: currentHolder.user.totalCrownTime || 0,
+            totalTokensEarned: parseFloat(currentHolder.user.totalTokensEarned || '0')
           },
           session: {
-            id: currentHolder.sessionId,
+            id: currentHolder.id,
             startedAt: currentHolder.startedAt,
             durationSeconds: sessionDuration,
             tokensEarned: currentTokens
@@ -131,6 +142,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Start the first crown session (when no one holds it)
   app.post('/api/crown/start', async (req, res) => {
+    console.log('[CROWN START] Route hit with body:', req.body);
     try {
       const { userId } = req.body;
       
@@ -147,16 +159,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(409).json({
           success: false,
           error: 'Crown is already being held',
-          currentHolder: currentHolder.username
+          currentHolder: currentHolder.user.username || 'Unknown'
         });
       }
       
-      // Verify user exists
-      const user = await storage.getUserById(userId);
+      // Verify user exists and is World ID verified
+      const user = await storage.getUser(userId);
       if (!user) {
         return res.status(404).json({
           success: false,
           error: 'User not found'
+        });
+      }
+      
+      if (!user.isVerified) {
+        return res.status(403).json({
+          success: false,
+          error: 'You must verify with World ID to participate in the crown game'
         });
       }
       
@@ -183,6 +202,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Steal the crown from current holder
   app.post('/api/crown/steal', async (req, res) => {
+    console.log('[CROWN STEAL] Route hit with body:', req.body);
     try {
       const { userId } = req.body;
       
@@ -193,8 +213,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Verify user exists
-      const user = await storage.getUserById(userId);
+      // Verify user exists and is World ID verified
+      const user = await storage.getUser(userId);
       if (!user) {
         return res.status(404).json({
           success: false,
@@ -202,8 +222,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
+      if (!user.isVerified) {
+        return res.status(403).json({
+          success: false,
+          error: 'You must verify with World ID to participate in the crown game'
+        });
+      }
+      
       // Check for active cooldown
-      const cooldown = await storage.getCooldown(userId, 'steal_crown');
+      const cooldown = await storage.getUserCooldown(userId, 'steal_crown');
       if (cooldown) {
         const timeRemaining = Math.ceil((new Date(cooldown.expiresAt).getTime() - Date.now()) / 1000);
         return res.status(429).json({
@@ -223,7 +250,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Prevent stealing from yourself
-      if (currentHolder.id === userId) {
+      if (currentHolder.user.id === userId) {
         return res.status(409).json({
           success: false,
           error: 'You already hold the crown'
@@ -231,15 +258,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Calculate tokens earned by previous holder
-      const sessionDuration = Math.floor((Date.now() - new Date(currentHolder.startedAt).getTime()) / 1000);
+      const sessionDuration = Math.floor((Date.now() - new Date(currentHolder.startedAt!).getTime()) / 1000);
       const tokensPerSecond = parseInt(process.env.DAILY_TOKEN_POOL || '5555') / 86400;
       const tokensEarned = Math.floor(sessionDuration * tokensPerSecond * 100) / 100;
       
       // End previous session with token earnings
-      await storage.endCrownSession(currentHolder.sessionId, tokensEarned);
+      await storage.endCrownSession(currentHolder.id, tokensEarned);
       
       // Start new crown session
-      const newSession = await storage.stealCrown(currentHolder.id, userId);
+      const newSession = await storage.stealCrown(currentHolder.user.id, userId);
       
       // Set cooldown for the new holder (1 hour)
       const cooldownExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
@@ -251,9 +278,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json({
         success: true,
-        message: `Crown stolen from ${currentHolder.username}!`,
+        message: `Crown stolen from ${currentHolder.user.username}!`,
         previousHolder: {
-          username: currentHolder.username,
+          username: currentHolder.user.username || 'Unknown',
           sessionDuration,
           tokensEarned
         },
@@ -277,7 +304,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { userId } = req.params;
       
-      const cooldown = await storage.getCooldown(userId, 'steal_crown');
+      const cooldown = await storage.getUserCooldown(userId, 'steal_crown');
       
       if (!cooldown) {
         return res.json({
@@ -291,7 +318,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (timeRemaining <= 0) {
         // Cooldown expired, clean it up
-        await storage.cleanupExpiredCooldowns();
+        await storage.clearExpiredCooldowns();
         return res.json({
           success: true,
           hasCooldown: false,

@@ -47,6 +47,12 @@ app.use((req, res, next) => {
     throw err;
   });
 
+  // Add explicit middleware to ensure API routes are not caught by Vite
+  app.use('/api/*', (req, res, next) => {
+    // If we reach here, the API route wasn't handled, return 404
+    res.status(404).json({ success: false, error: `API endpoint ${req.method} ${req.path} not found` });
+  });
+
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route
   // doesn't interfere with the other routes
