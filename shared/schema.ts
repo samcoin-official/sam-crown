@@ -8,6 +8,7 @@ export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   username: text("username").unique(), // Make unique for getUserByUsername safety
   password: text("password"),
+  profilePictureUrl: text("profile_picture_url"), // Added this field
   // World ID verification fields
   worldIdNullifier: text("world_id_nullifier").unique(), // Unique per verified human
   isVerified: boolean("is_verified").default(false),
@@ -103,7 +104,8 @@ export const userCooldownsRelations = relations(userCooldowns, ({ one }) => ({
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   worldIdNullifier: true,
-}).partial({ worldIdNullifier: true }); // Make worldIdNullifier optional
+  profilePictureUrl: true, // Added this field to the schema
+}).partial({ worldIdNullifier: true, profilePictureUrl: true }); // Make both optional
 
 // Separate schema for World ID verification
 export const verifyUserSchema = z.object({
