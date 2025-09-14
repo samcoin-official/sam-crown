@@ -18,36 +18,88 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // World ID verification endpoint
   app.post('/api/verify', async (req, res) => {
     try {
-      const { payload, action, signal } = req.body;
+      const { proof, action, signal } = req.body;
       
-      // In a real implementation, you would:
-      // 1. Use verifyCloudProof from @worldcoin/minikit-js
-      // 2. Check against your World App ID
-      // 3. Verify the action matches your configured action
+      console.log('World ID verification request:', { action, proof: proof ? 'provided' : 'missing' });
       
-      console.log('World ID verification request:', { action, payload });
+      // Validate required environment variables
+      const worldAppId = process.env.WORLD_APP_ID;
+      const worldActionId = process.env.WORLD_ACTION_ID;
+      const worldApiKey = process.env.WORLD_API_KEY;
       
-      // For development, simulate successful verification
-      // TODO: Replace with actual World ID verification
-      if (action === 'play-and-earn') {
-        return res.json({ 
-          success: true, 
-          status: 200,
-          message: 'Verification successful' 
+      if (!worldAppId || !worldActionId || !worldApiKey) {
+        console.error('Missing World ID configuration:', { worldAppId: !!worldAppId, worldActionId: !!worldActionId, worldApiKey: !!worldApiKey });
+        return res.status(500).json({
+          success: false,
+          error: 'World ID verification not properly configured'
         });
       }
       
-      return res.status(400).json({ 
-        success: false, 
-        status: 400,
-        message: 'Invalid action' 
+      // Validate action matches configured action
+      if (action !== worldActionId) {
+        return res.status(400).json({
+          success: false,
+          error: `Invalid action. Expected '${worldActionId}', received '${action}'`
+        });
+      }
+      
+      // Validate proof exists
+      if (!proof || !proof.nullifier_hash) {
+        return res.status(400).json({
+          success: false,
+          error: 'Valid World ID proof is required'
+        });
+      }
+      
+      // Verify proof with World ID cloud verification
+      const verificationBody = {
+        nullifier_hash: proof.nullifier_hash,
+        merkle_root: proof.merkle_root,
+        proof: proof.proof,
+        verification_level: proof.verification_level || 'orb',
+        action: action,
+        signal: signal || ''
+      };
+      
+      console.log('Calling World ID verification API...');
+      
+      const verifyResponse = await fetch(`https://developer.worldcoin.org/api/v1/verify/${worldAppId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${worldApiKey}`
+        },
+        body: JSON.stringify(verificationBody)
       });
+      
+      const verifyResult = await verifyResponse.json();
+      
+      if (!verifyResponse.ok || !verifyResult.success) {
+        console.error('World ID verification failed:', verifyResult);
+        return res.status(400).json({
+          success: false,
+          error: verifyResult.detail || 'World ID verification failed'
+        });
+      }
+      
+      console.log('World ID verification successful:', { nullifier: proof.nullifier_hash });
+      
+      // Store or update user with World ID verification
+      // The nullifier_hash serves as a unique identifier for this verified user
+      const nullifier = proof.nullifier_hash;
+      
+      return res.json({
+        success: true,
+        verified: true,
+        nullifier: nullifier,
+        message: 'World ID verification successful'
+      });
+      
     } catch (error) {
-      console.error('Verification error:', error);
-      return res.status(500).json({ 
-        success: false, 
-        status: 500,
-        message: 'Verification failed' 
+      console.error('World ID verification error:', error);
+      return res.status(500).json({
+        success: false,
+        error: 'Internal verification error'
       });
     }
   });

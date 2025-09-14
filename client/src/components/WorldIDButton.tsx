@@ -48,26 +48,26 @@ export default function WorldIDButton({ onVerify, isVerified = false, className 
         return;
       }
 
-      // Send proof to backend for verification
+      // Send proof to backend for verification  
       const verifyResponse = await fetch('/api/verify', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          payload: finalPayload as ISuccessResult,
+          proof: (finalPayload as ISuccessResult).proof,
           action: 'play-and-earn',
-          signal: undefined,
+          signal: 'sam-crown-verification',
         }),
       });
 
       const verifyResponseJson = await verifyResponse.json();
       
-      if (verifyResponseJson.status === 200) {
+      if (verifyResponseJson.success) {
         console.log('Verification success!');
         onVerify?.(true);
       } else {
-        console.log('Backend verification failed');
+        console.log('Backend verification failed:', verifyResponseJson.error);
       }
     } catch (error) {
       console.error('World ID verification error:', error);

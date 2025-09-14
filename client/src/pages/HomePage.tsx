@@ -15,6 +15,8 @@ import { Info, AlertTriangle, Trophy, Users, HelpCircle, Loader2 } from 'lucide-
 import { playSwipeSound, playSuccessSound } from '@/utils/sounds';
 import { useQuery } from '@tanstack/react-query';
 import type { TokenConfigResponse } from '@shared/schema';
+import { MiniKit } from '@worldcoin/minikit-js';
+import { toast } from '@/hooks/use-toast';
 
 // TODO: remove mock data when implementing real backend
 const mockCurrentHolder = {
