@@ -1,0 +1,56 @@
+SAM Drip Crown Game - Project Summary
+Current Status
+Working Foundation: Deployed World App Mini App with World ID integration
+URL: https://sam-drip-mcxv91ej-sam-coins-projects.vercel.app
+GitHub: https://github.com/samcoin-official/sam-crown
+What's Working
+
+Next.js 15 World App Mini App template deployed on Vercel
+World Developer Portal app configured (play-and-earn action)
+Environment variables set correctly in Vercel
+Basic World ID verification system implemented
+Git workflow and deployment pipeline established
+
+Current Issue
+App experiencing vibration/glitching in World App due to conflicting authentication systems. TypeScript build errors preventing successful deployment.
+Project Architecture
+SAM Drip/
+├── World Portal App (Mini App, Cloud verification)
+├── Vercel Deployment (Next.js)
+├── GitHub Repository (sam-crown)
+└── Environment Variables (World ID + Auth secrets)
+Environment Configuration
+bashNEXT_PUBLIC_WORLD_APP_ID=app_[id]
+NEXT_PUBLIC_WORLD_ACTION_ID=play-and-earn
+WORLD_APP_ID=app_[id]
+WORLD_ACTION_ID=play-and-earn
+WORLD_API_KEY=sk_[key]
+AUTH_SECRET=sam-crown-secret-key-2024
+Core Game Concept
+SAM Crown Competition: King-of-the-hill style game where verified humans compete to hold the "SAM Crown" and earn SAM tokens while holding it. Inspired by World Flag app mechanics.
+Key Files That Need Fixing
+
+/src/components/AuthButton/index.tsx - World ID verification (has TypeScript errors)
+/src/app/api/verify/route.ts - Backend verification (TypeScript errors)
+/src/auth/index.ts - Simplified auth config (unused variable)
+
+Technical Challenges
+
+Multiple authentication systems conflicting (wallet auth vs World ID)
+TypeScript/ESLint errors preventing builds
+Need to follow official World documentation patterns exactly
+
+Next Steps to Complete
+
+Fix TypeScript build errors
+Test working World ID verification
+Implement crown competition mechanics
+Add database for tracking crown holder and earnings
+Create crown game UI with Samcoin character integration
+Add 1-hour cooldown system between steal attempts
+
+Resources
+
+World Docs: https://docs.world.org/mini-apps/commands/verify
+Vercel Dashboard: Project settings and deployments
+World Developer Portal: App configuration and testing
