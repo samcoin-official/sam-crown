@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Shield, Check } from 'lucide-react';
 import { MiniKit, VerifyCommandInput, VerificationLevel, ISuccessResult } from '@worldcoin/minikit-js';
+import { toast } from '@/hooks/use-toast';
 
 interface WorldIDButtonProps {
   onVerify?: (verified: boolean) => void;
@@ -19,18 +20,16 @@ export default function WorldIDButton({ onVerify, isVerified = false, className 
   }, []);
 
   const handleVerify = async () => {
-    console.log('World ID verification triggered');
-    setIsVerifying(true);
-    
     if (!isMiniKitInstalled) {
-      console.log('MiniKit not installed, using fallback verification');
-      // Fallback for development/testing
-      setTimeout(() => {
-        setIsVerifying(false);
-        onVerify?.(true);
-      }, 2000);
+      toast({
+        title: 'Open in World App',
+        description: 'Launch the Sam Crown mini app inside World App to verify with World ID.',
+      });
       return;
     }
+
+    console.log('World ID verification triggered');
+    setIsVerifying(true);
 
     try {
       const verifyPayload: VerifyCommandInput = {
@@ -44,7 +43,6 @@ export default function WorldIDButton({ onVerify, isVerified = false, className 
       
       if (finalPayload.status === 'error') {
         console.log('Verification error:', finalPayload);
-        setIsVerifying(false);
         return;
       }
 
@@ -85,15 +83,22 @@ export default function WorldIDButton({ onVerify, isVerified = false, className 
     );
   }
 
+  const isDisabled = isVerifying || !isMiniKitInstalled;
+  const buttonLabel = !isMiniKitInstalled
+    ? 'Open in World App to verify'
+    : isVerifying
+      ? 'Verifying...'
+      : 'Verify with World ID';
+
   return (
     <Button
       onClick={handleVerify}
-      disabled={isVerifying}
+      disabled={isDisabled}
       className={className}
       data-testid="button-world-id-verify"
     >
       <Shield className="w-4 h-4 mr-2" />
-      {isVerifying ? 'Verifying...' : 'Verify with World ID'}
+      {buttonLabel}
     </Button>
   );
 }
