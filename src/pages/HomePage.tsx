@@ -1,10 +1,11 @@
 'use client';
+import type { ReactElement } from 'react';
 
-export default function HomePage(): JSX.Element {
+export default function HomePage(): ReactElement {
   return (
     <main className="mx-auto max-w-5xl px-4 py-8">
       <h1 className="text-2xl font-bold">Home</h1>
-      <p className="mt-2 text-sm text-gray-600">Placeholder page. Replace with your content.</p>
+      <p className="text-gray-300">Welcome.</p>
     </main>
   );
 }
