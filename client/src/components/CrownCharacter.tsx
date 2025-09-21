@@ -1,27 +1,40 @@
-import samWithCrown from '@assets/Sam wearing a crown_1757776750714.png';
+'use client';
 
-interface CrownCharacterProps {
-  size?: 'sm' | 'md' | 'lg' | 'xl';
-  className?: string;
-}
+import Image, { type StaticImageData } from 'next/image';
+import samWithCrown from '@/assets/sam-with-crown.png';
 
-const sizeClasses = {
+type Size = 'sm' | 'md' | 'lg';
+
+const sizeClasses: Record<Size, string> = {
   sm: 'w-12 h-12',
-  md: 'w-16 h-16', 
-  lg: 'w-24 h-24',
-  xl: 'w-32 h-32'
+  md: 'w-20 h-20',
+  lg: 'w-28 h-28',
 };
 
-export default function CrownCharacter({ size = 'lg', className = '' }: CrownCharacterProps) {
+type CrownCharacterProps = {
+  size?: Size;
+  className?: string;
+  src?: string | StaticImageData; // allow URL or imported image
+  alt?: string;
+};
+
+export default function CrownCharacter({
+  size = 'md',
+  className = '',
+  src = samWithCrown,
+  alt = 'SAM Character with Crown',
+}: CrownCharacterProps) {
   return (
-    <div className={`relative inline-block ${className}`}>
-      <img 
-        src={samWithCrown} 
-        alt="SAM Character with Crown" 
-        className={`${sizeClasses[size]} object-contain crown-glow`}
+    <div className={`relative inline-block ${sizeClasses[size]} ${className}`}>
+      <Image
+        src={src}
+        alt={alt}
+        fill
+        sizes="(max-width: 768px) 96px, 160px"
         draggable={false}
+        priority
+        className="object-contain crown-glow pointer-events-none select-none"
       />
-      <div className="absolute inset-0 crown-gradient opacity-10 blur-lg -z-10" />
     </div>
   );
 }

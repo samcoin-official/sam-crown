@@ -1,0 +1,19 @@
+@import "tailwindcss";
+
+/* Paste your original crown-game CSS below to restore look/feel. Keep classnames identical. */
+/* Example baseline tokens — keep or replace with your theme */
+:root{
+  --crown-gold:#f1c40f;
+  --crown-deep:#b8860b;
+  --crown-bg:#0b0b10;
+  --crown-card:#121320;
+  --crown-accent:#3b82f6;
+}
+html,body{height:100%}
+body{background:var(--crown-bg); color:#e5e7eb}
+
+/* Utilities often referenced by components */
+.crown-glow{filter:drop-shadow(0 0 12px rgba(241,196,15,.55))}
+.card{background:var(--crown-card)}
+.btn{display:inline-flex;align-items:center;gap:.5rem;border-radius:.75rem;padding:.5rem .9rem}
+.btn-primary{background:var(--crown-accent);color:#fff}

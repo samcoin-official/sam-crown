@@ -26,7 +26,7 @@ export default function CrownHolder({ holder, isCurrentUser = false, className =
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <Avatar className="w-12 h-12 border-2 border-crown-gold">
-              <AvatarImage src={holder.avatar} alt={holder.name} />
+              <AvatarImage src={holder.avatar ?? '/images/default-avatar.png'} alt={holder.name} />
               <AvatarFallback className="bg-crown-gold text-crown-gold-foreground font-semibold">
                 {holder.name.split(' ').map(n => n[0]).join('')}
               </AvatarFallback>

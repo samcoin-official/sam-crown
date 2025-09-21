@@ -1,30 +1,43 @@
-import crownImage from '@assets/generated_images/Golden_crown_game_icon_ebd40dcf.png';
+'use client';
 
-interface CrownIconProps {
-  size?: 'sm' | 'md' | 'lg' | 'xl';
-  withGlow?: boolean;
-  className?: string;
-}
+import Image, { type StaticImageData } from 'next/image';
+// KEEP YOUR EXISTING IMPORT PATH IF DIFFERENT
+import crownImage from '@/assets/crown.png';
 
-const sizeClasses = {
-  sm: 'w-8 h-8',
-  md: 'w-12 h-12',
+type Size = 'sm' | 'md' | 'lg';
+
+const sizeClasses: Record<Size, string> = {
+  sm: 'w-6 h-6',
+  md: 'w-10 h-10',
   lg: 'w-16 h-16',
-  xl: 'w-24 h-24'
 };
 
-export default function CrownIcon({ size = 'md', withGlow = false, className = '' }: CrownIconProps) {
+type CrownIconProps = {
+  size?: Size;
+  className?: string;
+  withGlow?: boolean;
+  src?: string | StaticImageData;
+  alt?: string;
+};
+
+export default function CrownIcon({
+  size = 'md',
+  className = '',
+  withGlow = false,
+  src = crownImage,
+  alt = 'SAM Crown',
+}: CrownIconProps) {
   return (
-    <div className={`relative inline-block ${className}`}>
-      <img 
-        src={crownImage} 
-        alt="SAM Crown" 
-        className={`${sizeClasses[size]} object-contain ${withGlow ? 'crown-glow' : ''}`}
+    <div className={`relative inline-block ${sizeClasses[size]} ${className}`}>
+      <Image
+        src={src}
+        alt={alt}
+        fill
         draggable={false}
+        className={`object-contain ${withGlow ? 'crown-glow' : ''}`}
+        sizes="(max-width:768px) 64px, 96px"
+        priority={false}
       />
-      {withGlow && (
-        <div className="absolute inset-0 crown-gradient opacity-20 blur-sm -z-10" />
-      )}
     </div>
   );
 }

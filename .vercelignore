@@ -1,0 +1,4 @@
+client/**
+*.map
+*.log
+.next/
