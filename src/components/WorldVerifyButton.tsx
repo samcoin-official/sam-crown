@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import type { ReactElement } from 'react';
 import {
   MiniKit,
   VerificationLevel,
@@ -9,14 +10,19 @@ import {
 } from '@worldcoin/minikit-js';
 import { toast } from 'sonner';
 
-const ACTION_ID = process.env.NEXT_PUBLIC_WORLD_ACTION ?? 'play-and-earn';
+type Props = {
+  onVerified?: (result: ISuccessResult) => void;
+};
 
-export default function WorldVerifyButton() {
+const ACTION_ID: string =
+  process.env.NEXT_PUBLIC_WORLD_ACTION ?? 'play-and-earn';
+
+export default function WorldVerifyButton({ onVerified }: Props): ReactElement {
   const [loading, setLoading] = useState(false);
 
-  const runVerify = async () => {
+  const runVerify = async (): Promise<void> => {
     if (!MiniKit.isInstalled()) {
-      toast.info('Open this page inside World App to verify.');
+      toast.info('Open inside World App to verify.');
       return;
     }
 
@@ -29,16 +35,15 @@ export default function WorldVerifyButton() {
 
       if (finalPayload.status === 'error') {
         const err = finalPayload as MiniAppVerifyActionErrorPayload;
-        // tolerate differing SDK payload shapes without `any`
         const info = err as unknown as {
           detail?: string;
           message?: string;
           code?: string;
           error?: string;
         };
-        const msg =
-          info.detail ?? info.message ?? info.code ?? info.error ?? 'Verification cancelled.';
-        toast.error(msg);
+        toast.error(
+          info.detail ?? info.message ?? info.code ?? info.error ?? 'Verification cancelled.'
+        );
         return;
       }
 
@@ -52,14 +57,14 @@ export default function WorldVerifyButton() {
 
       const data = (await res.json()) as { ok?: boolean; error?: string };
       if (!res.ok || data?.ok === false) {
-        toast.error(data?.error ?? 'Verification failed on server.');
+        toast.error(data?.error ?? 'Server verification failed.');
         return;
       }
 
       toast.success('World ID verified');
+      onVerified?.(success);
     } catch (e) {
-      const msg = e instanceof Error ? e.message : 'Verification failed.';
-      toast.error(msg);
+      toast.error(e instanceof Error ? e.message : 'Verification failed.');
     } finally {
       setLoading(false);
     }
