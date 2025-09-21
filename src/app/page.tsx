@@ -1,3 +1,8 @@
+import CrownCharacter from '@/components/CrownCharacter';
+import CrownIcon from '@/components/CrownIcon';
+import CrownHolder from '@/components/CrownHolder';
+import TokenEarningRate from '@/components/TokenEarningRate';
+
 export default function Page() {
   return (
     <div className="space-y-6">
@@ -6,6 +11,16 @@ export default function Page() {
         <p className="text-gray-300">
           World App Mini App scaffolding is ready. UI theme restored via <code>globals.css</code>.
         </p>
+      </section>
+
+      <section className="flex items-center gap-6">
+        <CrownCharacter size="md" />
+        <CrownIcon size="lg" />
+      </section>
+
+      <section className="grid sm:grid-cols-2 gap-4">
+        <CrownHolder name="Current Holder" tokens={12850} rank={1} />
+        <TokenEarningRate perMinute={420} capacity={1000} />
       </section>
     </div>
   );
