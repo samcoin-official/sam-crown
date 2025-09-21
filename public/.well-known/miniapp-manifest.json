@@ -1,0 +1,14 @@
+{
+  "name": "Sam Crown Mini App",
+  "description": "A companion experience for exploring the Sam Crown platform with curated content and tools.",
+  "icon_url": "/miniapp-icon.svg",
+  "homepage": "https://sam-crown.example.com",
+  "allowed_origins": [
+    "https://sam-crown.example.com",
+    "https://staging.sam-crown.example.com"
+  ],
+  "command_permissions": {
+    "chat.send": "prompt",
+    "wallet.transfer": "prompt"
+  }
+}
