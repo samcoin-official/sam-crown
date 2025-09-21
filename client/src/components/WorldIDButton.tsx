@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Shield, Check } from 'lucide-react';
 import { MiniKit, VerifyCommandInput, VerificationLevel, ISuccessResult } from '@worldcoin/minikit-js';
+import { toast } from '@/hooks/use-toast';
 
 interface WorldIDButtonProps {
   onVerify?: (verified: boolean) => void;
@@ -12,23 +13,34 @@ interface WorldIDButtonProps {
 
 export default function WorldIDButton({ onVerify, isVerified = false, className = '' }: WorldIDButtonProps) {
   const [isVerifying, setIsVerifying] = useState(false);
-  const [isMiniKitInstalled, setIsMiniKitInstalled] = useState(false);
+  const [isMiniKitAvailable, setIsMiniKitAvailable] = useState<boolean | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    setIsMiniKitInstalled(MiniKit.isInstalled());
+    setIsMiniKitAvailable(MiniKit.isInstalled());
   }, []);
+
+  useEffect(() => {
+    if (isMiniKitAvailable === false) {
+      toast({
+        title: 'Open in World App',
+        description: 'World ID verification is only available inside World App. Open the mini app within World App to continue.',
+      });
+    }
+  }, [isMiniKitAvailable]);
 
   const handleVerify = async () => {
     console.log('World ID verification triggered');
     setIsVerifying(true);
-    
-    if (!isMiniKitInstalled) {
-      console.log('MiniKit not installed, using fallback verification');
-      // Fallback for development/testing
-      setTimeout(() => {
-        setIsVerifying(false);
-        onVerify?.(true);
-      }, 2000);
+    setErrorMessage(null);
+
+    if (isMiniKitAvailable !== true) {
+      console.log('MiniKit not installed, prompting user to open World App');
+      toast({
+        title: 'Open in World App',
+        description: 'World ID verification requires the World App. Please open this mini app inside World App to continue.',
+      });
+      setIsVerifying(false);
       return;
     }
 
@@ -44,11 +56,21 @@ export default function WorldIDButton({ onVerify, isVerified = false, className 
       
       if (finalPayload.status === 'error') {
         console.log('Verification error:', finalPayload);
+        const message =
+          'error' in finalPayload && typeof finalPayload.error === 'string'
+            ? finalPayload.error
+            : 'Verification was not completed. Please try again.';
+        setErrorMessage(message);
+        toast({
+          variant: 'destructive',
+          title: 'Verification failed',
+          description: message,
+        });
         setIsVerifying(false);
         return;
       }
 
-      // Send proof to backend for verification  
+      // Send proof to backend for verification
       const verifyResponse = await fetch('/api/verify', {
         method: 'POST',
         headers: {
@@ -61,16 +83,43 @@ export default function WorldIDButton({ onVerify, isVerified = false, className 
         }),
       });
 
-      const verifyResponseJson = await verifyResponse.json();
-      
+      let verifyResponseJson: { success?: boolean; error?: string } | null = null;
+
+      try {
+        verifyResponseJson = await verifyResponse.json();
+      } catch (parseError) {
+        console.error('Failed to parse verification response:', parseError);
+      }
+
+      if (!verifyResponse.ok || !verifyResponseJson?.success) {
+        const message =
+          verifyResponseJson?.error ??
+          (verifyResponse.ok
+            ? 'Verification failed. Please try again.'
+            : `Verification failed (${verifyResponse.status}). Please try again.`);
+        console.log('Backend verification failed:', message);
+        setErrorMessage(message);
+        toast({
+          variant: 'destructive',
+          title: 'Verification failed',
+          description: message,
+        });
+        return;
+      }
+
       if (verifyResponseJson.success) {
         console.log('Verification success!');
         onVerify?.(true);
-      } else {
-        console.log('Backend verification failed:', verifyResponseJson.error);
       }
     } catch (error) {
       console.error('World ID verification error:', error);
+      const message = 'An unexpected error occurred during verification. Please try again.';
+      setErrorMessage(message);
+      toast({
+        variant: 'destructive',
+        title: 'Verification error',
+        description: message,
+      });
     } finally {
       setIsVerifying(false);
     }
@@ -86,14 +135,26 @@ export default function WorldIDButton({ onVerify, isVerified = false, className 
   }
 
   return (
-    <Button
-      onClick={handleVerify}
-      disabled={isVerifying}
-      className={className}
-      data-testid="button-world-id-verify"
-    >
-      <Shield className="w-4 h-4 mr-2" />
-      {isVerifying ? 'Verifying...' : 'Verify with World ID'}
-    </Button>
+    <div className="flex flex-col gap-2">
+      <Button
+        onClick={handleVerify}
+        disabled={isVerifying || isMiniKitAvailable === false}
+        className={className}
+        data-testid="button-world-id-verify"
+      >
+        <Shield className="w-4 h-4 mr-2" />
+        {isVerifying ? 'Verifying...' : 'Verify with World ID'}
+      </Button>
+      {isMiniKitAvailable === false && (
+        <p className="text-sm text-muted-foreground" data-testid="world-id-minikit-warning">
+          Open this mini app inside World App to verify your humanity.
+        </p>
+      )}
+      {errorMessage && (
+        <p className="text-sm text-destructive" role="status" aria-live="assertive" data-testid="world-id-error">
+          {errorMessage}
+        </p>
+      )}
+    </div>
   );
 }
