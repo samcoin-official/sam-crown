@@ -9,7 +9,7 @@ export default function Page() {
       <section className="card rounded-2xl p-6 border border-gray-800/60">
         <h1 className="text-2xl font-bold text-yellow-300 mb-2">SAM Crown Game</h1>
         <p className="text-gray-300">
-          World App Mini App scaffolding is ready. UI theme restored via <code>globals.css</code>.
+          World App Mini App — crown UI restored via <code>globals.css</code> and local components.
         </p>
       </section>
 
